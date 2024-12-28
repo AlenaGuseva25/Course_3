@@ -1,8 +1,6 @@
 import abc
 import requests
-import json
 from typing import List, Dict, Any, Optional
-from src.utils import validate_vacancy
 
 
 class BaseAPI(abc.ABC):
@@ -44,7 +42,7 @@ class HeadHunterAPI:
 
         response = self._make_request(employers_url, params=params)
         if response:
-            data = response.json() # Исправлено: удален encoding='utf-8'
+            data = response.json()
             employers = data.get("items", [])
             if not employers:
                 print("Нет работодателей в ответе")
@@ -62,11 +60,25 @@ class HeadHunterAPI:
                 params = {'employer_id': employer_id}
                 response = self._make_request(vacancies_url, params=params)
                 if response:
-                    data = response.json() # Исправлено: удален encoding='utf-8'
+                    data = response.json()
                     items = data.get("items", [])
                     for item in items:
                         item["employer"] = employer
                     vacancies.extend(items)
         return vacancies
+
+
+    def validate_vacancy(self, vacancy: Dict[str, Any]) -> bool:
+        """Метод проверяет структуру данных вакансии."""
+        return (
+                vacancy.get("name") is not None
+                and vacancy.get("area") is not None
+                and vacancy.get("area", {}).get("name") is not None
+                and vacancy.get("salary") is not None
+                and vacancy["salary"].get("currency") == "RUR"
+                and vacancy.get("alternate_url") is not None
+                and vacancy.get("employer") is not None
+                and vacancy["employer"].get("name") is not None
+        )
 
 
