@@ -1,19 +1,21 @@
 import os
-import psycopg2
-from dotenv import load_dotenv
 from typing import Any
 
-from src.interaction_API import HeadHunterAPI
+import psycopg2
+from dotenv import load_dotenv
 
 
 def create_database():
     load_dotenv()
 
-    # try:
-    conn = psycopg2.connect(host=os.getenv("DATABASE_HOST"), port=os.getenv("DATABASE_PORT"),
-                                     user=os.getenv("DATABASE_USER"), password=os.getenv("DATABASE_PASSWORD"))
+    conn = psycopg2.connect(
+        host=os.getenv("DATABASE_HOST"),
+        port=os.getenv("DATABASE_PORT"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+    )
 
-    conn.autocommit = True  # Нужно для создания базы данных без транзакции
+    conn.autocommit = True
     print("Соединение с PostgreSQL установлено.")
 
     cur = conn.cursor()
@@ -21,14 +23,9 @@ def create_database():
 
     name = os.getenv("DATABASE_NAME")
     cur.execute(f" DROP DATABASE IF EXISTS {name}")
-    # (f"ALTER DATABASE {name} WITH ALLOW_CONNECTIONS = false;" f" ALTER DATABASE {name} WITH ALLOW_CONNECTIONS = true;")
     cur.execute(f"CREATE DATABASE {name}")
     print("База данных создана успешно.")
 
-    # except psycopg2.Error as e:
-    #     print(f"Ошибка при работе с базой данных: {e}")
-    # finally:
-    # if conn:
     conn.commit()
     conn.close()
     print("Соединение с БД закрыто.")
@@ -38,25 +35,35 @@ def create_database():
 
 def create_tables():
     load_dotenv()
-    conn = psycopg2.connect(host=os.getenv("DATABASE_HOST"), port=os.getenv("DATABASE_PORT"),
-                                     user=os.getenv("DATABASE_USER"), password=os.getenv("DATABASE_PASSWORD"),
-                                     database=os.getenv("DATABASE_NAME"))
+    conn = psycopg2.connect(
+        host=os.getenv("DATABASE_HOST"),
+        port=os.getenv("DATABASE_PORT"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        database=os.getenv("DATABASE_NAME"),
+    )
     cur = conn.cursor()
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
         DROP TABLE IF EXISTS organizations CASCADE;
         CREATE TABLE organizations (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         url TEXT NOT NULL,
         open_vacancy INTEGER NOT NULL)
-        """)
+        """
+        )
         conn.commit()
     conn.close()
 
-    conn = psycopg2.connect(host=os.getenv("DATABASE_HOST"), port=os.getenv("DATABASE_PORT"),
-                            user=os.getenv("DATABASE_USER"), password=os.getenv("DATABASE_PASSWORD"),
-                            database=os.getenv("DATABASE_NAME"))
+    conn = psycopg2.connect(
+        host=os.getenv("DATABASE_HOST"),
+        port=os.getenv("DATABASE_PORT"),
+        user=os.getenv("DATABASE_USER"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        database=os.getenv("DATABASE_NAME"),
+    )
 
     with conn.cursor() as cur:
         cur.execute(
@@ -77,12 +84,6 @@ def create_tables():
     return "База данных создана"
 
 
-import os
-
-import psycopg2
-from dotenv import load_dotenv
-
-
 def save_data_to_db(data_organizations: list[dict], data_vacancies: list[dict]):
     load_dotenv()
 
@@ -92,7 +93,7 @@ def save_data_to_db(data_organizations: list[dict], data_vacancies: list[dict]):
             port=os.getenv("DATABASE_PORT"),
             user=os.getenv("DATABASE_USER"),
             password=os.getenv("DATABASE_PASSWORD"),
-            database=os.getenv("DATABASE_NAME")
+            database=os.getenv("DATABASE_NAME"),
         )
 
         with conn.cursor() as cur:
@@ -101,10 +102,13 @@ def save_data_to_db(data_organizations: list[dict], data_vacancies: list[dict]):
                 name = org["name"]
                 url = org["url"]
                 open_vacancies = org["open vacancies"]
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO organizations (id, name, url, open_vacancy)
                     VALUES (%s, %s, %s, %s)
-                """, (id, name, url, open_vacancies))
+                """,
+                    (id, name, url, open_vacancies),
+                )
 
             for vacancy in data_vacancies:
                 vacancy_id = vacancy.get("vacancy_id")
@@ -114,10 +118,13 @@ def save_data_to_db(data_organizations: list[dict], data_vacancies: list[dict]):
                 salary_to = vacancy["salary"].get("to", 0)
                 employer_id = vacancy["employer_id"]
 
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO vacancies (vacancy_id, name, salary_from, salary_to, vacancies_url, employer_id)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                """, (vacancy_id, name, salary_from, salary_to, url, employer_id))
+                """,
+                    (vacancy_id, name, salary_from, salary_to, url, employer_id),
+                )
 
             conn.commit()
             print("Данные успешно сохранены в базу данных.")
@@ -137,9 +144,13 @@ class DBManager:
 
     def __init__(self):
         load_dotenv()
-        self.conn = psycopg2.connect(host=os.getenv("DATABASE_HOST"), port=os.getenv("DATABASE_PORT"),
-                                     user=os.getenv("DATABASE_USER"), password=os.getenv("DATABASE_PASSWORD"),
-                                     database=os.getenv("DATABASE_NAME"))
+        self.conn = psycopg2.connect(
+            host=os.getenv("DATABASE_HOST"),
+            port=os.getenv("DATABASE_PORT"),
+            user=os.getenv("DATABASE_USER"),
+            password=os.getenv("DATABASE_PASSWORD"),
+            database=os.getenv("DATABASE_NAME"),
+        )
 
     def get_companies_and_vacancies_count(self) -> list[tuple]:
         """
@@ -189,7 +200,6 @@ class DBManager:
             conn.commit()
         return avg_salary
 
-
     def get_vacancies_with_higher_salary(self) -> list[tuple]:
         """
         Получает список всех вакансий, у которых зарплата выше средней по всем вакансиям
@@ -208,7 +218,6 @@ class DBManager:
             conn.commit()
         conn.close()
         return vacancies
-
 
     def get_vacancies_with_keyword(self, word: str) -> list[tuple]:
         """
@@ -237,6 +246,3 @@ class DBManager:
 # print(c)
 # print(t)
 # print(s)
-
-
-
