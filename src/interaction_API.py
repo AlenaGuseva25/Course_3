@@ -1,7 +1,7 @@
 import abc
+from typing import Any, Dict, List, Optional
 
 import requests
-from typing import List, Dict, Any, Optional
 
 
 class BaseAPI(abc.ABC):
@@ -25,7 +25,7 @@ class BaseAPI(abc.ABC):
 class HeadHunterAPI(BaseAPI):
     """Класс для работы с API HeadHunter."""
 
-    def __init__(self):
+    def __init__(self, key_word: str = ''):
         """Инициализация класса HeadHunterAPI."""
         super().__init__()
         self.params = {"sort_by": "by_vacancies_open", "only_with_vacancies": "only_with_vacancies", "area": 113}
@@ -47,7 +47,6 @@ class HeadHunterAPI(BaseAPI):
         """Получает список компаний с вакансиями."""
         employers_url = f"{self._BASE_URL}/employers"
         employers = []
-        # params = {"only_with_vacancies": "true" if only_with_vacancies else "false"}
 
         response = self._make_request(employers_url, params=self.params)
         if response:
@@ -68,83 +67,35 @@ class HeadHunterAPI(BaseAPI):
     def get_vacancies_by_employers(self, employers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Получает список вакансий по списку работодателей."""
         vacancies = []
-        for employer in employers:
-            employer_id = employer.get("id")
-            if employer_id:
-                vacancies_url = f"{self._BASE_URL}/vacancies"
-                params = {"page" : 0, "per_page": 20, "text": "", "employer_id": employer_id}
-                response = self._make_request(vacancies_url, params=params)
-                if response:
-                    data = response.json()["items"]
-                    for dat in data:
+        url = f"{self._BASE_URL}/vacancies"
+        employer_ids = [employer.get("id") for employer in employers]
+
+        for employer_id in employer_ids:
+            self.params = {"page": 0, "per_page": 20, "text": "", "employer_id": employer_ids}
+
+        while self.params.get("page") < 20:
+            response = self._make_request(url, params=self.params)
+
+            if response and response.status_code == 200:
+                data = response.json().get("items", [])
+                for dat in data:
+                    if dat.get("employer") and dat["employer"].get("id") in employer_ids:
                         if dat["salary"] and dat["salary"]["currency"] == "RUR":
-                            vacancy = {"id": dat.get("id"),
-                                    "name": dat.get("name"),
-                                    "url": dat.get("url"),
-                                    "employer_id": dat.get("employer").get("id"),
-                                    "salary": dat.get("salary")}
-                            vacancies.append(vacancy)
+                            vacancy = {
+                                "vacancy_id": dat.get("id"),
+                                "name": dat.get("name"),
+                                "salary": dat["salary"],
+                                "url": dat.get("alternate_url"),
+                                "employer_id": dat["employer"].get("id"),
+                            }
+                            if vacancy["vacancy_id"] not in vacancies:
+                                vacancies.append(vacancy)
+
+                self.params["page"] += 1
+            else:
+                break
+
         return vacancies
-
-    # def get_vacancies_by_keyword(self, keyword: str, only_with_salary: bool = True) -> List[Dict[str, Any]]:
-    #     """Получает список вакансий по ключевому слову."""
-    #     vacancies_url = f"{self._BASE_URL}/vacancies"
-    #     params = {"text": keyword}
-    #
-    #     response = self._make_request(vacancies_url, params=params)
-    #     if response:
-    #         data = response.json()
-    #         items = data.get("items", [])
-    #
-    #         # Фильтруем вакансии по ключевому слову
-    #         filtered_vacancies = [
-    #             vacancy
-    #             for vacancy in items
-    #             if keyword.lower() in vacancy.get("name", "").lower()
-    #         ]
-    #
-    #         if only_with_salary:
-    #             # Дополнительная фильтрация по наличию зарплаты
-    #             filtered_vacancies = [
-    #                 vacancy for vacancy in filtered_vacancies if vacancy.get("salary") is not None
-    #             ]
-    #
-    #         # Форматируем результат, чтобы включить только нужные поля
-    #         formatted_vacancies = []
-    #         for vacancy in filtered_vacancies:
-    #             formatted_vacancy = {
-    #                 "name": vacancy.get("name"),
-    #                 "company": vacancy.get("employer", {}).get("name"),
-    #                 "salary": self._format_salary(vacancy.get("salary")),
-    #                 "url": vacancy.get("alternate_url"),
-    #                 "description": vacancy.get("snippet", {}).get("responsibility", "")
-    #             }
-    #             formatted_vacancies.append(formatted_vacancy)
-    #
-    #         return formatted_vacancies
-    #
-    #     return []
-
-    # def _format_salary(self, salary: Optional[Dict[str, Any]]) -> str:
-    #     """Форматирует зарплату для удобного отображения."""
-    #     if salary:
-    #         salary_from = salary.get("from")
-    #         salary_to = salary.get("to")
-    #         currency = salary.get("currency")
-    #
-    #         salary_str = ""
-    #         if salary_from and salary_to:
-    #             salary_str = f"{salary_from} - {salary_to} {currency}"
-    #         elif salary_from:
-    #             salary_str = f"от {salary_from} {currency}"
-    #         elif salary_to:
-    #             salary_str = f"до {salary_to} {currency}"
-    #         else:
-    #             salary_str = "Не указана"
-    #
-    #         return salary_str
-    #
-    #     return "Не указана"
 
 
     def validate_vacancy(self, vacancy: Dict[str, Any]) -> bool:
@@ -161,8 +112,8 @@ class HeadHunterAPI(BaseAPI):
         )
 
 
-result = HeadHunterAPI().get_employers(10)
-print(result)
-
-p = HeadHunterAPI().get_vacancies_by_employers(result)
-print(p)
+# result = HeadHunterAPI().get_employers(10)
+# print(result)
+#
+# p = HeadHunterAPI().get_vacancies_by_employers(result)
+# print(p)
