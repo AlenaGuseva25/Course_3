@@ -4,9 +4,10 @@ from typing import Any
 import psycopg2
 from dotenv import load_dotenv
 
+load_dotenv()
+
 
 def create_database():
-    load_dotenv()
 
     conn = psycopg2.connect(
         host=os.getenv("DATABASE_HOST"),
@@ -34,7 +35,6 @@ def create_database():
 
 
 def create_tables():
-    load_dotenv()
     conn = psycopg2.connect(
         host=os.getenv("DATABASE_HOST"),
         port=os.getenv("DATABASE_PORT"),
@@ -85,7 +85,6 @@ def create_tables():
 
 
 def save_data_to_db(data_organizations: list[dict], data_vacancies: list[dict]):
-    load_dotenv()
 
     try:
         conn = psycopg2.connect(
@@ -236,5 +235,3 @@ class DBManager:
             conn.commit()
         conn.close()
         return result
-
-

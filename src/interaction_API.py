@@ -99,11 +99,11 @@ class HeadHunterAPI(BaseAPI):
                     ):
                         if dat["salary"] and dat["salary"]["currency"] == "RUR":
                             vacancy = {
-                                "vacancy_id": dat.get("id"),
-                                "name": dat.get("name"),
+                                "vacancy_id": dat['id'],
+                                "name": dat["name"],
                                 "salary": dat["salary"],
-                                "url": dat.get("alternate_url"),
-                                "employer_id": dat["employer"].get("id"),
+                                "url": dat["alternate_url"],
+                                "employer_id": dat["employer"]["id"],
                             }
                             if vacancy["vacancy_id"] not in vacancies:
                                 vacancies.append(vacancy)
