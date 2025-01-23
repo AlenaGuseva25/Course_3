@@ -1,7 +1,6 @@
-import argparse
 import requests
 from typing import List
-from src.DBmanager import DBManager, create_database, create_tables, save_data_to_db
+from src.db_manager import DBManager, create_database, create_tables, save_data_to_db
 from src.interaction_API import HeadHunterAPI
 
 

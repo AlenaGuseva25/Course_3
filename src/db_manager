@@ -238,11 +238,3 @@ class DBManager:
         return result
 
 
-# data_organizations = HeadHunterAPI().get_employers(10)
-# data_vacancies = HeadHunterAPI().get_vacancies_by_employers(data_organizations)
-# c = create_database()
-# t = create_tables()
-# s = save_data_to_db(data_organizations, data_vacancies)
-# print(c)
-# print(t)
-# print(s)
