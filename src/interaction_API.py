@@ -34,7 +34,6 @@ class HeadHunterAPI(BaseAPI):
             "area": 113,
         }
 
-
     def _make_request(
         self, url: str, params: Dict = None
     ) -> Optional[requests.Response]:
@@ -113,11 +112,3 @@ class HeadHunterAPI(BaseAPI):
                 break
 
         return vacancies
-
-
-
-# result = HeadHunterAPI().get_employers(10)
-# print(result)
-#
-# p = HeadHunterAPI().get_vacancies_by_employers(result)
-# print(p)
